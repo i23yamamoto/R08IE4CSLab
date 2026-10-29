@@ -10,7 +10,7 @@ class SevenSegDecoder extends Module {
 
   // TODO: switch / is と WireDefault を用いて透過ラッチのないデコーダを実装してください
   // 未定義値 (10〜15) は全消灯 (0.U(7.W)) としてください
-  //
+  val pattern = WireDefault(0.U(7.W))
   // 7セグメント対応 (点灯=1, 消灯=0):
   // 0: "b1111110".U (abcdef)
   // 1: "b0110000".U (bc)
@@ -23,6 +23,22 @@ class SevenSegDecoder extends Module {
   // 8: "b1111111".U (abcdefg)
   // 9: "b1111011".U (abcdfg)
   io.seg := 0.U
+
+  //優先度はないため直行選択で0~9まで指定
+  switch(io.bcd) {
+    is(0.U) { pattern := "b1111110".U }
+    is(1.U) { pattern := "b0110000".U }
+    is(2.U) { pattern := "b1101101".U }
+    is(3.U) { pattern := "b1111001".U }
+    is(4.U) { pattern := "b0110011".U }
+    is(5.U) { pattern := "b1011011".U }
+    is(6.U) { pattern := "b1011111".U }
+    is(7.U) { pattern := "b1110000".U }
+    is(8.U) { pattern := "b1111111".U }
+    is(9.U) { pattern := "b1111011".U }
+  }
+
+  io.seg := ~pattern
 }
 
 object VerilogGenerator extends App {

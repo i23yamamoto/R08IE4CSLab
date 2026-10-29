@@ -29,7 +29,29 @@ class OneHzGenerator(val clkFreq: Int = 9000000) extends Module {
   //   - cntReg が halfPeriod - 1、および fullPeriod - 1 のタイミングで ledReg を反転 (0.5秒ごと点滅)
   //   - cntReg が fullPeriod - 1 かつ en が有効なとき、oneHzPulse を 1 クロックだけ true.B にアサート
 
-  io.ledBlink   := ledReg
+  // 1. カウンタ更新論理（0 〜 fullPeriod-1 を周期カウント）
+when(io.clear) {
+  cntReg := 0.U
+}.elsewhen(io.en) {
+  when(cntReg === (fullPeriod - 1).U) {
+    cntReg := 0.U
+  }.otherwise {
+    cntReg := cntReg + 1.U
+  }
+}
+
+// 2. LED点滅レジスタ更新論理（0.5秒ごとに反転）
+when(io.clear) {
+  ledReg := false.B
+}.elsewhen(io.en) {
+  when(cntReg === (halfPeriod - 1).U || cntReg === (fullPeriod - 1).U) {
+    ledReg := !ledReg
+  }
+}
+
+// 3. 出力信号の接続
+io.ledBlink   := ledReg
+io.oneHzPulse := io.en && (cntReg === (fullPeriod - 1).U)
 }
 
 object VerilogGenerator extends App {

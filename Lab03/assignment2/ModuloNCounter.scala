@@ -28,6 +28,15 @@ class ModuloNCounter(val n: Int = 10, val width: Int = 4, val clkFreq: Int = 900
   // 4. LED点滅更新論理 (ledReg: clear で false、halfPeriod-1 および fullPeriod-1 で反転)
   // 5. 出力論理 (カウンタ記述と明確に分離し、負論理 ~ledReg, ~modReg を接続)
 
+  when(io.clear) { cntReg := 0.U }.elsewhen(io.en) {
+    when(cntReg === (clkFreq - 1).U) { cntReg := 0.U }.otherwise { cntReg := cntReg + 1.U }
+  }
+  modEn := io.en && (cntReg === (fullPeriod - 1).U) // 1秒ストローブ
+
+  // 2. モジュロN更新論理 (clear > modEn の優先度で 0 〜 n-1 をカウント)
+  when(io.clear) { modReg := 0.U }.elsewhen(modEn) {
+    when(modReg === (n - 1).U) { modReg := 0.U }.otherwise { modReg := modReg + 1.U }
+  }
   io.runLED := ~ledReg
   io.count  := ~modReg
 }

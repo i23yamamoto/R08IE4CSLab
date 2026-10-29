@@ -13,6 +13,10 @@ class Mux4to1 extends Module {
 
   // TODO: sel (0〜3) の値に応じて in0〜in3 を選択出力してください
   io.out := 0.U
+  val muxLow = Mux(io.sel(0), io.in1, io.in0)
+  val muxHigh = Mux(io.sel(0), io.in3, io.in2)
+  val finalOut = Mux(io.sel(1), muxHigh, muxLow)
+  io.out := ~finalOut
 }
 
 object VerilogGenerator extends App {
