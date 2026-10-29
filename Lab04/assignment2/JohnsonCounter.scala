@@ -21,12 +21,34 @@ class JohnsonCounter(val width: Int = 4, val clkFreq: Int = 9000000) extends Mod
 
   // TODO:
   // 1. 分周カウンタ cntReg (clear時は 0.U、en時は 0 〜 clkFreq-1 を巡回) と
+  when(io.clear) {
+    cntReg := 0.U
+  }.elsewhen(io.en) {
+    when(cntReg === (clkFreq - 1).U) {
+      cntReg := 0.U
+    }.otherwise {
+      cntReg := cntReg + 1.U
+    }
+  }
+  enJohnsonCounter := io.en && (cntReg === (fullPeriod - 1).U)
   //    1秒ストローブ enJohnsonCounter := io.en && (cntReg === (fullPeriod - 1).U) を実装してください
+  when(io.clear) {
+    state := 0.U
+  }.elsewhen(enJohnsonCounter) {
+    state := Cat(state(width - 2, 0), ~state(width - 1))
+  }
   // 2. state レジスタ (clear時は 0.U、enJohnsonCounter 時は Cat(state(width - 2, 0), ~state(width - 1))) を実装してください
+  when(io.clear) {
+    ledReg := false.B
+  }.elsewhen(io.en) {
+    when(cntReg === (halfPeriod - 1).U || cntReg === (fullPeriod - 1).U) {
+      ledReg := !ledReg
+    }
+  }
   // 3. ledReg の 0.5秒反転と出力接続を実装してください
 
-  io.out    := state
-  // io.out := ~state
+  //io.out    := state
+  io.out := ~state
   io.runLED := ~ledReg
 }
 

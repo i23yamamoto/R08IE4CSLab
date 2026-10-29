@@ -22,11 +22,34 @@ class GrayCodeCounter(val width: Int = 4, val clkFreq: Int = 9000000) extends Mo
 
   // TODO:
   // 1. 分周カウンタ cntReg と 1秒ストローブ enGrayCodeCounter := io.en && (cntReg === (fullPeriod - 1).U) を実装してください
+  when(io.clear) {
+    cntReg := 0.U
+  }.elsewhen(io.en) {
+    when(cntReg === (clkFreq - 1).U) {
+      cntReg := 0.U
+    }.otherwise {
+      cntReg := cntReg + 1.U
+    }
+  }
+  enGrayCodeCounter := io.en && (cntReg === (fullPeriod - 1).U)
   // 2. バイナリカウンタ binReg (clear時は 0.U、enGrayCodeCounter 時は binReg + 1.U) を実装してください
+  when(io.clear) {
+    binReg := 0.U
+  }.elsewhen(enGrayCodeCounter) {
+    binReg := binReg + 1.U
+  }
   // 3. バイナリカウンタからグレイコードへの変換論理 (val gray = binReg ^ (binReg >> 1)) と
   //    負論理出力 (io.gray := ~gray, io.bin := ~binReg, io.runLED := ~ledReg) を実装してください
+  when(io.clear) {
+    ledReg := false.B
+  }.elsewhen(io.en) {
+    when(cntReg === (halfPeriod - 1).U || cntReg === (fullPeriod - 1).U) {
+      ledReg := !ledReg
+    } 
+  }
 
-  io.gray   := 0.U
+  val gray = binReg ^ (binReg >> 1)
+  io.gray   := ~gray
   io.bin    := ~binReg
   io.runLED := ~ledReg
 }

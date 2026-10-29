@@ -24,9 +24,38 @@ class RingCounter(val width: Int = 4, val clkFreq: Int = 9000000) extends Module
   //    1秒ストローブ enRingCounter := io.en && (cntReg === (fullPeriod - 1).U) を実装してください
   // 2. state レジスタ (clear時は 1.U、enRingCounter 時は Cat(state(width - 2, 0), state(width - 1))) を実装してください
   // 3. ledReg の 0.5秒反転と出力接続を実装してください
+  //Runボタンがenと繋がっている
+  // TODO: 不正状態(PopCount!=1)からの自動復帰論理を持つ1-hot循環シフトを実装してください
+  when(io.clear) {
+    cntReg := 0.U
+  }.elsewhen(io.en) {
+    when(cntReg === (clkFreq - 1).U) {
+      cntReg := 0.U
+    }.otherwise {
+      cntReg := cntReg + 1.U
+    }
+  }
 
-  io.out    := state
-  // io.out := ~state
+  enRingCounter := io.en && (cntReg === (fullPeriod - 1).U)
+
+  // 正常時: 左循環シフト (Cat(state(width - 2, 0), state(width - 1)))
+  when(io.clear) {
+    state := 1.U
+  }.elsewhen(enRingCounter) {
+    state := Cat(state(width - 2,0),state(width - 1))
+  }
+
+  // 異常時: 次クロックで自動的に 1.U に強制復帰
+  when(io.clear) {
+    ledReg := true.B
+  }.elsewhen(io.en) {
+    when(cntReg === (halfPeriod - 1).U || cntReg === (fullPeriod - 1).U) {
+      ledReg := !ledReg
+    }
+  }
+
+  //io.out    := state
+  io.out := ~state
   io.runLED := ~ledReg
 }
 
