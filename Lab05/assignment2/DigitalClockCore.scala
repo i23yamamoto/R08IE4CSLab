@@ -28,10 +28,20 @@ class DigitalClockCore extends Module {
     val hour  = Output(UInt(5.W)) // 0〜23
   })
 
+  val secCounter = Module(new ModuloNCounter(60,6))
+  val minCounter = Module(new ModuloNCounter(60,6))
+  val hrsCounter = Module(new ModuloNCounter(24,5))
+
+  secCounter.io.clear := io.clear
+  secCounter.io.en := io.enSec
+  minCounter.io.clear := io.clear
+  minCounter.io.en := io.enSec && secCounter.io.rollover
+  hrsCounter.io.clear := io.clear
+  hrsCounter.io.en := io.enSec && secCounter.io.rollover && minCounter.io.rollover
   // TODO: 秒(60進) -> 分(60進) -> 時(24進) を同期カスケードで結合してください
-  io.sec  := 0.U
-  io.min  := 0.U
-  io.hour := 0.U
+  io.sec  := secCounter.io.count
+  io.min  := minCounter.io.count
+  io.hour := hrsCounter.io.count
 }
 
 object VerilogGenerator extends App {
